@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">PlotterControl</string>
+    <string name="action_settings">Einstellungen</string>
+    <string name="title_activity_fullscreen">FullscreenActivity</string>
+    <string name="enter_name_dialog_abort">Abbrechen</string>
+    <string name="enter_name_dialog_ok">OK</string>
+    <string name="file_name_hint">neue_plotter_datei.xml</string>
+    <string name="btn_print">An Plotter senden</string>
+    <string name="menu_info">Info</string>
+    <string name="title_activity_edit">EditActivity</string>
+    <string name="btn_add_text">Add</string>
+
+</resources>

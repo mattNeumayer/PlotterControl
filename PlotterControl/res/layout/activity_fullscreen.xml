@@ -1,0 +1,44 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#DDDDDD"
+    tools:context=".FullscreenActivity" >
+
+    <!--
+         The primary full-screen view. This can be replaced with whatever view
+         is needed to present your content, e.g. VideoView, SurfaceView,
+         TextureView, etc.
+    -->
+
+	<com.example.plottercontrol.PDrawingView
+	    android:id="@+id/PDrawingView"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent" />
+    
+    <!--
+         This FrameLayout insets its children based on system windows using
+         android:fitsSystemWindows.
+    -->
+
+	<LinearLayout
+	    android:id="@+id/fullscreen_content_controls"
+	    style="?buttonBarStyle"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_gravity="bottom"
+	    android:background="@color/black_overlay"
+	    android:orientation="horizontal"
+	    tools:ignore="UselessParent" >
+
+	    <Button
+	        android:id="@+id/print_button"
+	        style="?buttonBarButtonStyle"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_gravity="bottom"
+	        android:text="@string/btn_print" />
+
+	</LinearLayout>
+
+</FrameLayout>
