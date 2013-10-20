@@ -1,11 +1,11 @@
 package com.example.plottercontrol;
 
-import android.content.Context;
+import android.app.Activity;
 import android.view.View;
 
 public class QuSystemUIHider {
-	private int mShowFlags = View.SYSTEM_UI_FLAG_VISIBLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
-	private int mHideFlags = View.SYSTEM_UI_FLAG_LOW_PROFILE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_FULLSCREEN;
+	private int mShowFlags = View.SYSTEM_UI_FLAG_VISIBLE;
+	private int mHideFlags = View.SYSTEM_UI_FLAG_FULLSCREEN;
 
 	// Cached values.
 	private int mControlsHeight;
@@ -16,9 +16,9 @@ public class QuSystemUIHider {
 	private View controlsView;
 	private View contentView;
 
-	private Context context;
+	private Activity context;
 
-	public QuSystemUIHider(Context context, View contentView, View controlsView) {
+	public QuSystemUIHider(Activity context, View contentView, View controlsView) {
 		this.context = context;
 		this.contentView = contentView;
 		this.controlsView = controlsView;
@@ -35,6 +35,7 @@ public class QuSystemUIHider {
 	public void hide() {
 		if (uiVisible) {
 			contentView.setSystemUiVisibility(mHideFlags);
+			context.getActionBar().hide();
 			animateControlsView(false);
 		}
 		uiVisible = false;
@@ -43,6 +44,7 @@ public class QuSystemUIHider {
 	public void show() {
 		if (!uiVisible) {
 			contentView.setSystemUiVisibility(mShowFlags);
+			context.getActionBar().show();
 			animateControlsView(true);
 		}
 		uiVisible = true;
@@ -60,9 +62,7 @@ public class QuSystemUIHider {
 			mShortAnimTime = context.getResources().getInteger(
 					android.R.integer.config_shortAnimTime);
 		}
-		controlsView
-		.animate()
-		.translationY(show ? 0 : mControlsHeight)
-		.setDuration(mShortAnimTime);
+		controlsView.animate().translationY(show ? 0 : mControlsHeight)
+				.setDuration(mShortAnimTime);
 	}
 }

@@ -10,6 +10,7 @@
     <string name="btn_print">An Plotter senden</string>
     <string name="menu_info">Info</string>
     <string name="title_activity_edit">EditActivity</string>
+    <string name="btn_connect">Verbinden</string>
     <string name="btn_add_text">Add</string>
 
 </resources>

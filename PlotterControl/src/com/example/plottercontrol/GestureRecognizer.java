@@ -5,44 +5,42 @@ import android.graphics.Rect;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
-import android.view.View;
-import android.view.View.OnTouchListener;
 
-public class GestureRecognizer implements OnTouchListener, SurfaceHolder.Callback {
+public class GestureRecognizer implements SurfaceHolder.Callback {
+
 	interface GestureListener {
 		void onGesture(int gesture);
-		boolean onNonGestureTouchEvent(View v, MotionEvent event);
+
+		boolean onNonGestureTouchEvent(MotionEvent event);
 	}
-	
+
 	private static final String TAG = GestureRecognizer.class.getSimpleName();
-	
+
 	final int MIN_Y_SLIDE_OFFSET = 20;
-	
+
 	private Rect slideArea;
 	private PointF slideStart;
-	
+
 	private int surfaceHeight = 1;
 	private int surfaceWidth = 1;
-	static final int SWIPE_FROM_TOP = 0;
-	
+	private static final int SWIPE_FROM_TOP = 0;
+
 	private GestureListener mListener;
-	
-	public GestureRecognizer(SurfaceHolder holder, View view, GestureListener listener) {
-		Log.v(TAG, "GestureRecognizer()");
+
+	public GestureRecognizer(SurfaceHolder holder, GestureListener listener) {
 		slideArea = new Rect();
 		holder.addCallback(this);
-//		view.setOnTouchListener(this); shit funzt ned aus unerklaerlichem grund
 		mListener = listener;
 	}
-	
-	public boolean onTouch(View v, MotionEvent event) {
-		//Log.v(TAG, "onTouch()");
-		
+
+	public boolean recognizeGesture(MotionEvent event) {
+
 		boolean handled = false;
-		
+
 		switch (event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
-			if (slideArea.contains((int) event.getRawX(), (int) event.getRawY())) {
+			if (slideArea
+					.contains((int) event.getRawX(), (int) event.getRawY())) {
 				slideStart = new PointF(event.getRawX(), event.getRawY());
 				handled = true;
 			}
@@ -56,13 +54,16 @@ public class GestureRecognizer implements OnTouchListener, SurfaceHolder.Callbac
 			}
 			break;
 		case MotionEvent.ACTION_UP:
-			slideStart = null;
+			if(slideStart != null){
+				handled = true;
+				slideStart = null;
+			}
 			break;
 		}
-		
+
 		if (!handled)
-			handled = mListener.onNonGestureTouchEvent(v, event);
-		
+			handled = mListener.onNonGestureTouchEvent(event);
+
 		return handled;
 	}
 
@@ -71,15 +72,17 @@ public class GestureRecognizer implements OnTouchListener, SurfaceHolder.Callbac
 			int height) {
 		surfaceWidth = width;
 		surfaceHeight = height;
-		
+
 		Log.v(TAG, "surfaceChanged()");
-		
+
 		slideArea.set(0, 0, surfaceWidth, 100);
 	}
 
 	@Override
-	public void surfaceCreated(SurfaceHolder holder) {}
+	public void surfaceCreated(SurfaceHolder holder) {
+	}
 
 	@Override
-	public void surfaceDestroyed(SurfaceHolder holder) {}
+	public void surfaceDestroyed(SurfaceHolder holder) {
+	}
 }
