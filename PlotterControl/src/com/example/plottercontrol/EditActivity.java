@@ -131,9 +131,9 @@ public class EditActivity extends Activity {
 			Toast.makeText(this, "No NXT connected!", Toast.LENGTH_SHORT)
 					.show();
 			//TODO remove the next lines before distribution!
-			Toast.makeText(this, "OutputStream redirected to Toaster! (DEBUG ONLY)", Toast.LENGTH_SHORT)
-			.show();
-			changeLayout(true);
+//			Toast.makeText(this, "OutputStream redirected to Toaster! (DEBUG ONLY)", Toast.LENGTH_SHORT)
+//			.show();
+//			changeLayout(true);
 		}
 	}
 
