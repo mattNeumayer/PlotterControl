@@ -38,8 +38,10 @@ public class BluetoothController {
 			mBluetoothSocket = bluetoothDevice
 					.createRfcommSocketToServiceRecord(UUID
 							.fromString(UUID_NXT));
-			BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
-			mBluetoothSocket.connect();
+			//BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
+			if(!mBluetoothSocket.isConnected()){
+				mBluetoothSocket.connect();
+			}
 			mBTOutputStream = new BufferedOutputStream(mBluetoothSocket.getOutputStream());
 		} catch (IOException e) {
 			Log.w(TAG, "Unable to create a socket!");
@@ -50,29 +52,51 @@ public class BluetoothController {
 
 	public void send(Context con) {
 		try {
-			byte[] numberOfLinesByte = new byte[4];
-			inDataStream.read(numberOfLinesByte);
-			int numberOfLines = ByteBuffer.wrap(numberOfLinesByte).getInt();
-
-			for (int a = 0; a < numberOfLines; a++) {
-				Toast.makeText(con, "Points in Line " + a, Toast.LENGTH_SHORT)
-						.show();
-				byte[] lengthBytes = new byte[4];
-				inDataStream.read(lengthBytes);
-				int length = ByteBuffer.wrap(lengthBytes).getInt();
-
-				for (int i = 0; i < length; i++) {
-					byte[] buffer = new byte[8];
-					inDataStream.read(buffer);
-					ByteBuffer bb = ByteBuffer.wrap(buffer);
-					int x = bb.getInt();
-					int y = bb.getInt();
-					Toast.makeText(con, x + " " + y,
-							Toast.LENGTH_SHORT).show();
-					mBTOutputStream.write(buffer);
-					mBTOutputStream.flush();
-				}
-			}
+			mBTOutputStream.write(0x09);
+			mBTOutputStream.write(0x00);
+			mBTOutputStream.write(0x80);
+			mBTOutputStream.write(0x09);
+			mBTOutputStream.write(0x00);
+			
+			mBTOutputStream.write(0x05);
+			
+			int a = 1;
+			
+			mBTOutputStream.write((byte)a);
+			a >>= 8;
+			mBTOutputStream.write((byte)a);
+			a >>= 8;
+			mBTOutputStream.write((byte)a);
+			a >>= 8;
+			mBTOutputStream.write((byte)a);
+			a >>= 8;
+			
+			mBTOutputStream.write(0x00);
+			mBTOutputStream.flush();
+			
+//			byte[] numberOfLinesByte = new byte[4];
+//			inDataStream.read(numberOfLinesByte);
+//			int numberOfLines = ByteBuffer.wrap(numberOfLinesByte).getInt();
+//
+//			for (int a = 0; a < numberOfLines; a++) {
+//				//Toast.makeText(con, "Points in Line " + a, Toast.LENGTH_SHORT)
+//				//		.show();
+//				byte[] lengthBytes = new byte[4];
+//				inDataStream.read(lengthBytes);
+//				int length = ByteBuffer.wrap(lengthBytes).getInt();
+//
+//				for (int i = 0; i < length; i++) {
+//					byte[] buffer = new byte[8];
+//					inDataStream.read(buffer);
+//					ByteBuffer bb = ByteBuffer.wrap(buffer);
+//					int x = bb.getInt();
+//					int y = bb.getInt();
+//					Toast.makeText(con, x + " " + y,
+//							Toast.LENGTH_SHORT).show();
+//					mBTOutputStream.write(buffer);
+//					mBTOutputStream.flush();
+//				}
+//			}
 		} catch (IOException e) {
 			Log.e(TAG, "Failed to send Data!");
 		}
