@@ -1,7 +1,5 @@
 package com.example.plottercontrol;
 
-import java.io.PipedOutputStream;
-
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -92,13 +90,21 @@ public class PDrawingView extends SurfaceView implements GestureListener {
 
 	public PDrawingView(Context context, AttributeSet attrs) {
 		super(context, attrs);
+	}
+	
+	public void init(BluetoothController bluetoothController, EditActivity editActivity){
+		mEditActivity = editActivity;
+		
+		gestureRecognizer = new GestureRecognizer(this);
+		mPath = new PathHolder(20, bluetoothController); //TODO min Offset
+		
+		getHolder().addCallback(gestureRecognizer);
+		getHolder().addCallback(mPath);
 
-		gestureRecognizer = new GestureRecognizer(getHolder(), this);
-
-		mPath = new PathHolder(20); //TODO Adjust MIN_OFFSET
 		thread = new PDrawingViewThread(getHolder(), mPath);
 		thread.start();
 	}
+
 
 	@Override
 	public boolean onNonGestureTouchEvent(MotionEvent event) {
@@ -118,10 +124,6 @@ public class PDrawingView extends SurfaceView implements GestureListener {
 			break;
 		}
 		return handled;
-	}
-
-	public void setEditActivityRef(EditActivity editActivity) {
-		mEditActivity = editActivity;
 	}
 
 	public void startDrawing() {
@@ -156,11 +158,7 @@ public class PDrawingView extends SurfaceView implements GestureListener {
 		return gestureRecognizer.recognizeGesture(event);
 	}
 
-	public PipedOutputStream getDataStream() {
-		return mPath.getDataStream();
-	}
-
-	public boolean flushData() {
-		return mPath.flushData();
+	public void flushData() {
+		mPath.flushData();
 	}
 }

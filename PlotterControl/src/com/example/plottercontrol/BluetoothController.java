@@ -1,38 +1,38 @@
 package com.example.plottercontrol;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.nio.ByteBuffer;
 import java.util.UUID;
 
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.Context;
 import android.util.Log;
-import android.widget.Toast;
 
 public class BluetoothController {
-	private static final String TAG = MainActivity.class.getSimpleName();
+	private static final String TAG = BluetoothController.class.getSimpleName();
 
 	private BluetoothSocket mBluetoothSocket;
 	private static final String UUID_NXT = "00001101-0000-1000-8000-00805F9B34FB";
 
-	private PipedInputStream inDataStream;
+	private BufferedOutputStream mBTOutputStream;
 
-	public BluetoothController(PipedOutputStream dataStream) {
-		try {
-			inDataStream = new PipedInputStream(dataStream);
-		} catch (IOException e) {
-			Log.wtf(TAG, "Stream is already connected!?");
-		}
+	public BluetoothController() {
 	}
 
-	public boolean connectToBluetoothDevice(BluetoothDevice bluetoothDevice) {
+	public boolean connectToBluetoothAddress(String bluetoothAdress) {
 		try {
-			mBluetoothSocket = bluetoothDevice
-					.createRfcommSocketToServiceRecord(UUID
-							.fromString(UUID_NXT));
+			mBluetoothSocket = BluetoothAdapter
+					.getDefaultAdapter()
+					.getRemoteDevice(bluetoothAdress)
+					.createRfcommSocketToServiceRecord(
+							UUID.fromString(UUID_NXT));
+			if (BluetoothAdapter.getDefaultAdapter().isDiscovering()) {
+				BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
+			}
+			mBluetoothSocket.connect();
+			mBTOutputStream = new BufferedOutputStream(
+					mBluetoothSocket.getOutputStream());
 		} catch (IOException e) {
 			Log.w(TAG, "Unable to create a socket!");
 			return false;
@@ -40,30 +40,54 @@ public class BluetoothController {
 		return true;
 	}
 
-	public void send(Context con) {
-		try {
-			byte[] numberOfLinesByte = new byte[4];
-			inDataStream.read(numberOfLinesByte);
-			int numberOfLines = ByteBuffer.wrap(numberOfLinesByte).getInt();
+	public boolean sendUp() {
+		Log.i(TAG, "up");
 
-			for (int a = 0; a < numberOfLines; a++) {
-				Toast.makeText(con, "Points in Line " + a, Toast.LENGTH_SHORT)
-						.show();
-				byte[] lengthBytes = new byte[4];
-				inDataStream.read(lengthBytes);
-				int length = ByteBuffer.wrap(lengthBytes).getInt();
+		byte[] data = { 0x00, 0x00, 0x00, (byte) 0xFF };
+		return sendBytes(data);
+	}
 
-				byte[] buffer = new byte[length * 8];
+	public boolean sendDown() {
+		Log.i(TAG, "down");
 
-				inDataStream.read(buffer);
-				ByteBuffer bb = ByteBuffer.wrap(buffer);
-				for (int i = 0; i < length; i++) {
-					Toast.makeText(con, bb.getInt() + " " + bb.getInt(),
-							Toast.LENGTH_SHORT).show();
-				}
-			}
-		} catch (IOException e) {
-			Log.e(TAG, "Failed to send Data!");
+		byte[] data = { 0x00, 0x00, 0x01, (byte) 0xFF };
+		return sendBytes(data);
+	}
+
+	public boolean sendPoint(int x, int y) {
+		Log.i(TAG, "moveTo " + x + " " + y);
+
+		byte[] data = new byte[4];
+		for (int count = 0; count <= 1; count++) {
+			data[count] = (byte) x;
+			x >>= 8;
 		}
+		for (int count = 2; count <= 3; count++) {
+			data[count] = (byte) y;
+			y >>= 8;
+		}
+		return sendBytes(data);
+	}
+
+	private boolean sendBytes(byte[] data) {
+		try {
+			mBTOutputStream.write(0x09);
+			mBTOutputStream.write(0x00);
+
+			mBTOutputStream.write(0x80);
+			mBTOutputStream.write(0x09);
+			mBTOutputStream.write(0x00);
+			mBTOutputStream.write(0x05);
+
+			mBTOutputStream.write(data);
+			mBTOutputStream.write(0x00);
+
+			mBTOutputStream.flush();
+
+		} catch (IOException e) {
+			Log.w(TAG, "Couldn't write to stream!");
+			return false;
+		}
+		return true;
 	}
 }

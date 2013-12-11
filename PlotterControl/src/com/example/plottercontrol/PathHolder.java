@@ -1,48 +1,48 @@
 package com.example.plottercontrol;
 
-import java.io.IOException;
-import java.io.PipedOutputStream;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.LinkedList;
 
 import android.graphics.Path;
 import android.graphics.Point;
-import android.util.Log;
+import android.view.SurfaceHolder;
 
-public class PathHolder {
+public class PathHolder implements SurfaceHolder.Callback {
 	private static final String TAG = PDrawingView.class.getSimpleName();
 
-	private PipedOutputStream mDataStream;
+	private BluetoothController mBluetoothController;
 
 	private final int minOffset;
+	private final int DIN_A4_Y = 2970;
+	private final int DIN_A4_X = 2100;
+
+	private float xMultiplier;
+	private float yMultiplier;
+
 	private Path unflushedPaths = new Path();
 	private Path flushedPaths = new Path();
 
-	private ArrayList<ArrayList<Point>> unflushedPoints = new ArrayList<ArrayList<Point>>();
-	private ArrayList<ArrayList<Point>> flushedPoints = new ArrayList<ArrayList<Point>>();
+	private LinkedList<LinkedList<Point>> unflushedPoints = new LinkedList<LinkedList<Point>>();
+	private LinkedList<LinkedList<Point>> flushedPoints = new LinkedList<LinkedList<Point>>();
 
 	private boolean closed;
-	private ArrayList<Point> curPathPoints;
-	private int lastX;
-	private int lastY;
+	private LinkedList<Point> curPathPoints;
+	private float lastX;
+	private float lastY;
 
-	public PathHolder(int minOffset) {
-		mDataStream = new PipedOutputStream();
+	public PathHolder(int minOffset, BluetoothController bluetoothController) {
+		mBluetoothController = bluetoothController;
 		this.minOffset = minOffset;
 		this.closed = true;
-
 	}
 
 	public void moveTo(float x, float y) {
 		if (!closed) {
 			close();
 		}
-		curPathPoints = new ArrayList<Point>();
+		curPathPoints = new LinkedList<Point>();
 		closed = false;
 
-		lastX = Math.round(x);
-		lastY = Math.round(y);
-		curPathPoints.add(new Point(lastX, lastY));
+		add(x, y);
 		unflushedPaths.moveTo(x, y);
 	}
 
@@ -51,20 +51,23 @@ public class PathHolder {
 			moveTo(x, y);
 			return;
 		} else {
-			int xTemp = Math.round(x);
-			int yTemp = Math.round(y);
-			if (Math.abs(lastX - xTemp) > minOffset
-					|| Math.abs(lastY - yTemp) > minOffset) {
-				lastX = xTemp;
-				lastY = yTemp;
-				curPathPoints.add(new Point(lastX, lastY));
+			if (Math.abs(lastX - x) > minOffset
+					|| Math.abs(lastY - y) > minOffset) {
+				add(x, y);
 				unflushedPaths.lineTo(x, y);
 			}
 		}
 	}
 
+	public void add(float x, float y) {
+		lastX = x;
+		lastY = y;
+		curPathPoints.add(new Point(Math.round(x * xMultiplier), Math.round(y
+				* yMultiplier)));
+	}
+
 	public void close() {
-		if(curPathPoints.size() > 1){
+		if (curPathPoints.size() > 1) {
 			unflushedPoints.add(curPathPoints);
 		}
 		curPathPoints = null;
@@ -79,48 +82,33 @@ public class PathHolder {
 		return flushedPaths;
 	}
 
-	public PipedOutputStream getDataStream() {
-		return mDataStream;
-	}
-
-	public boolean flushData() {
-		/*
-		 * Format Documentation:
-		 * - Number of lines (4 Byte)
-		 * -- Number of points in the line (4 Byte)
-		 * --- Coordinates first point (4 Byte xPos, 4 Byte yPos)
-		 * --- Coordinates next points
-		 * -- Number of points in the next line
-		 * --- Coordinates first point
-		 * 
-		 * 
-		 * Repeat until finished.
-		 */
-		
-		try {
-			mDataStream.write(intToBytes(unflushedPoints.size()));
-			for (ArrayList<Point> line : unflushedPoints) {
-				byte[] buffer = new byte[line.size()];
-			
-				mDataStream.write(intToBytes(buffer.length));				
-				for (Point p : line) {
-					byte[] b = intToBytes(p.x);
-					byte[] c = intToBytes(p.y);
-					mDataStream.write(b);
-					mDataStream.write(c);
-				}
-				mDataStream.flush();
+	public void flushData() {
+		for (LinkedList<Point> line : unflushedPoints) {
+			mBluetoothController.sendDown();
+			for (Point p : line) {
+				mBluetoothController.sendPoint(p.x, p.y);
 			}
-			
-		} catch (IOException e) {
-			Log.e(TAG, "Failed writing to pipedStream!");
-			return false;
+			mBluetoothController.sendUp();
 		}
-		return true;
+	}
+
+	@Override
+	public void surfaceChanged(SurfaceHolder holder, int format, int width,
+			int height) {
+		xMultiplier = (float) (DIN_A4_X) / width;
+		yMultiplier = (float) (DIN_A4_Y) / height;
+	}
+
+	@Override
+	public void surfaceCreated(SurfaceHolder holder) {
+		// TODO Auto-generated method stub
 
 	}
 
-	private static byte[] intToBytes(int i) {
-		return ByteBuffer.allocate(4).putInt(i).array();
+	@Override
+	public void surfaceDestroyed(SurfaceHolder holder) {
+		// TODO Auto-generated method stub
+
 	}
+
 }
