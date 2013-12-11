@@ -27,9 +27,8 @@ public class GestureRecognizer implements SurfaceHolder.Callback {
 
 	private GestureListener mListener;
 
-	public GestureRecognizer(SurfaceHolder holder, GestureListener listener) {
+	public GestureRecognizer(GestureListener listener) {
 		slideArea = new Rect();
-		holder.addCallback(this);
 		mListener = listener;
 	}
 
@@ -63,7 +62,6 @@ public class GestureRecognizer implements SurfaceHolder.Callback {
 
 		if (!handled)
 			handled = mListener.onNonGestureTouchEvent(event);
-
 		return handled;
 	}
 
