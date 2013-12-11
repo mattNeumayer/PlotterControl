@@ -4,6 +4,7 @@ import java.util.Set;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.graphics.Color;
@@ -20,7 +21,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 public class EditActivity extends Activity {
-	private static final String TAG = MainActivity.class.getSimpleName();
+	private static final String TAG = EditActivity.class.getSimpleName();
 
 	private static final int REQUEST_ENABLE_BT = 1;
 	private static final int REQUEST_CONNECT = 2;
@@ -41,17 +42,16 @@ public class EditActivity extends Activity {
 		getWindow().setBackgroundDrawable(colorDrawable);
 
 		setContentView(R.layout.activity_fullscreen);
+		
+		mBluetoothController = new BluetoothController();
 
 		mPDrawingView = (PDrawingView) findViewById(R.id.PDrawingView);
-		mPDrawingView.setEditActivityRef(this);
+		mPDrawingView.init(mBluetoothController, this);
 		printBtn = (Button) findViewById(R.id.print_button);
 		final View controlsView = findViewById(R.id.fullscreen_content_controls);
 
 		mQuSystemUIHider = new QuSystemUIHider(this, mPDrawingView,
 				controlsView);
-
-		mBluetoothController = new BluetoothController(
-				mPDrawingView.getDataStream());
 
 		changeLayout(false);
 
@@ -59,10 +59,7 @@ public class EditActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				if (connected) {
-					if (mPDrawingView.flushData()) {
-						mBluetoothController.send(EditActivity.this
-								.getApplicationContext());
-					}
+					mPDrawingView.flushData();
 				} else {
 					initBluetoothConnection();
 				}
@@ -116,24 +113,36 @@ public class EditActivity extends Activity {
 	private void chooseBluetoothDevice(boolean openSettings) {
 		Set<BluetoothDevice> bluetoothDevices = BluetoothAdapter
 				.getDefaultAdapter().getBondedDevices();
-		if (!bluetoothDevices.isEmpty()) {
-			if (mBluetoothController.connectToBluetoothDevice(bluetoothDevices
-					.iterator().next())) {
-				changeLayout(true);
+		boolean handled = false;
+
+		for (BluetoothDevice bluetoothDevice : bluetoothDevices) {
+			if (bluetoothDevice.getBluetoothClass().getDeviceClass() == BluetoothClass.Device.TOY_ROBOT) {
+				if (mBluetoothController
+						.connectToBluetoothAddress(bluetoothDevice.getAddress())) {
+					changeLayout(true);
+					handled = true;
+				}
 			}
-		} else if (openSettings) {
-			Intent intentBluetooth = new Intent();
-			intentBluetooth
-					.setAction(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
-			startActivityForResult(intentBluetooth, REQUEST_CONNECT);
-		} else {
-			Log.i(TAG, "No BluetoothDevice bonded!");
-			Toast.makeText(this, "No NXT connected!", Toast.LENGTH_SHORT)
-					.show();
-			//TODO remove the next lines before distribution!
-//			Toast.makeText(this, "OutputStream redirected to Toaster! (DEBUG ONLY)", Toast.LENGTH_SHORT)
-//			.show();
-//			changeLayout(true);
+		}
+
+		if (!handled) {
+			if (openSettings) {
+				Intent intentBluetooth = new Intent();
+				intentBluetooth
+						.setAction(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
+				startActivityForResult(intentBluetooth, REQUEST_CONNECT);
+			} else {
+				Log.i(TAG, "No BluetoothDevice bonded!");
+				Toast.makeText(this, "No NXT connected!", Toast.LENGTH_SHORT)
+						.show();
+				
+				// TODO remove the next lines before distribution!
+				// Toast.makeText(this,
+				// "OutputStream redirected to Toaster! (DEBUG ONLY)",
+				// Toast.LENGTH_SHORT)
+				// .show();
+				// changeLayout(true);
+			}
 		}
 	}
 
